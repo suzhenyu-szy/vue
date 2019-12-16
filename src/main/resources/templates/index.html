@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+</head>
+
+    <script src="/webjars/vue/2.6.10/dist/vue.min.js"></script>
+    <script src="/webjars/axios/0.19.0/dist/axios.min.js"></script>
+    <script src="/webjars/jquery/3.4.1/jquery.min.js"></script>
+<body>
+    <div id="aa">
+    <button class="btn  btn-primary" @click="add">新增</button>
+    <table border="1" >
+        <tr>
+            <td>id</td>
+            <td>name</td>
+            <td>age</td>
+            <td>bir</td>
+            <td>操作</td>
+        </tr>
+        <tr v-for="(user,index) in users">
+            <td>{{user.userId}}</td>
+            <td>{{user.userName}}</td>
+            <td>{{user.userBir}}</td>
+            <td>{{user.userAge}}</td>
+            <!--<td>
+                <button class="btn  btn-danger"  @click="deleteById(user.userId)">删除</button>
+                <button class="btn  btn-primary"  @click="queryById(user.userId)">查看</button>
+            </td>-->
+            <td><a href="#nowhere" @click="deleteById(user.userId)">删除</a></td>
+            <td><a href="#nowhere" @click="updateById(user,index)">修改</a></td>
+        </tr>
+    </table>
+        <modal-add v-if="showModalAdd" @close="showModalAdd = false"  @addperson="addperson()"  :my-tag-add-l="selectTagAdd"></modal-add>
+        <modal-update v-if="showModalUpdate" @close="showModalUpdate = false"  @update="update()"  :my-tag-update-r="selectTagUpdate"></modal-update>
+    </div>
+    <script type="text/x-template" id="modal-template-add">
+            <div class="modal-mask">
+                <div class="modal-wrapper">
+                    <div class="modal-container">
+
+                        <div class="modal-header">
+                            <slot name="header">
+                                信息添加
+                            </slot>
+                        </div>
+
+                        <div class="modal-body">
+                            <slot name="body">
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">姓名</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" name="pname"   class="form-control" id="addname" >
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">年纪</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" name="age"  class="form-control" id="addage">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">日期</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" name="bir" class="form-control" id="addbir">
+                                    </div>
+                                </div>
+
+
+                            </slot>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button class=" btn btn-primary" @click="$emit('addperson')"  >提交 </button>
+                            <button class="modal-default-button btn btn-primary" @click="$emit('close')">放弃</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </script>
+    <!--model的body的部分---------编辑------->
+    <script type="text/x-template" id="modal-template-update">
+        <transition name="modal">
+            <div class="modal-mask">
+                <div class="modal-wrapper">
+                    <div class="modal-container">
+                        <div class="modal-header">
+                            <slot name="header">
+                                信息修改
+                            </slot>
+                        </div>
+                        <div class="modal-body">
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label"></label>
+                                    <div class="col-sm-8">
+                                        <input type="hidden" name="userId"  class="form-control"id="upUserId" v-model="myTagUpdateR.userId">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">姓名</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" name="userName"  class="form-control" id="upUserName" v-model="myTagUpdateR.userName">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">年纪</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" name="userAge"  class="form-control"id="upUserAge" v-model="myTagUpdateR.userAge">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">日期</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" name="userBir"  class="form-control"id="upUserBir" v-model="myTagUpdateR.userBir">
+                                    </div>
+                                </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button class=" btn btn-primary" @click="$emit('update')"  :msg = 'myTagUpdateR'>提交 </button>
+                            <button class="modal-default-button btn btn-primary" @click="$emit('close')">放弃</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+    </script>
+<script>
+    /*'modal-add':{
+        props: ['myTagAddL'],
+            template: '#modal-template-add'
+    }*/
+    Vue.component('modal-add',{
+        template:'#modal-template-add'
+    })
+    let componentInfo =Vue.component(
+
+        'modal-update',{
+            props: ['myTagUpdateR'],
+            template: '#modal-template-update'
+    })
+    new Vue({
+        el:"#aa",
+        data:{
+            users:[],
+            cache:{
+                index:null,
+                person:{},
+            },
+            showModalAdd:false,
+            selectTagAdd:null,
+            showModalUpdate: false,
+            selectTagUpdate:null,
+
+        },
+        components:{
+            componentInfo
+        },
+        mounted: function(){
+            this.findAll()
+        },
+        methods: {
+            findAll: function () {
+                axios({
+                    method:'get',
+                    url:'/tUser/findAll'
+                }).then((resp)=>{
+                    console.log(resp.data)
+                    this.users=resp.data;
+                }).catch(resp => {
+            })
+            },
+            deleteById:function (userId) {
+                console.log(userId)
+                axios({
+                    method:'get',
+                    url:'/tUser/deleteById',
+                    params:{id:userId}
+                }).then((data)=>{
+                    if(data!=null){
+                    location.reload();
+                }
+                }).catch(data =>{
+
+                })
+            },
+            add:function(){
+
+                //打开模态框的要求
+                console.log(1)
+
+                this.showModalAdd= !this.showModalAdd;
+                this.selectTagAdd = null;
+
+                //避免重复添加,重置新的默认对象
+                // this.newPerson = {name:'阿三',sex:'男',age:50};
+            },
+            addperson:function(){
+               /* console.log(2)*/
+                var addname=$('#addname').val();
+                var addage=$('#addage').val();
+                var addbir=$('#addbir').val();
+                /*console.log(addname)
+                console.log(addage)
+                console.log(addbir)*/
+                //实例化一个对象：
+                /*var person={"userName":addname,"userAge":addage,"userBir":addbir};
+                //将修改后的对象转为字符串，传如后台：
+                var str=JSON.stringify(person);
+                console.info(str);*/
+                /*$.ajax({
+                    type:"POST" ,
+                    url:"/addperson.action",
+                    data:"str="+str,
+                    success:function(msg){
+                        console.info(msg);
+                    }
+                });*/
+                axios({
+                    method:'post',
+                    url:'/tUser/addAll',
+                    params:{userName:addname,
+                    userAge:addage,
+                    userBir:addbir}
+                }).then((data)=>{
+                    if(data!=null){
+                    location.reload();
+                }
+            }).catch(data =>{
+
+                })
+                /*this.people.push(person);*/
+                this.showModalAdd = false;
+            },
+                 //编辑--打开model
+            updateById:function(tag,index){
+                //console.info(tag)
+                //打开模态框的要求
+                console.log(tag.userName)
+                this.showModalUpdate = true;
+                var cache = Object.assign({},tag);
+                console.log(cache)
+                this.$set(this.cache,'person',cache);
+                this.$set(this.cache,'index',index);
+                console.log(this.cache)
+                this.selectTagUpdate = cache;
+            },
+            update:function(){
+                var boolean=false;
+                console.info(111)
+                var index = this.cache.index;
+                var person = this.cache.person;
+                var id=person.userId;
+                var name=person.userName;
+                var age=person.userAge;
+                var bir=person.userBir;
+
+                //将修改后的对象转为字符串，传如后台：
+                /*var str=JSON.stringify(person);
+                console.info(str);*/
+                $.ajax({
+                    type:"POST" ,
+                    url:"/tUser/updateAll",
+                    data:{
+                        "userId":id,
+                        "userName":name,
+                        "userAge":age,
+                        "userBir":bir
+                    },
+                    success:function(msg){
+                        console.info(msg);
+                        if (msg)
+                            location.reload();
+                    }
+                });
+                this.$set(this.user, index, person);
+                this.showModalUpdate = false;
+            }
+        }
+
+    })
+</script>
+
+</body>
+</html>

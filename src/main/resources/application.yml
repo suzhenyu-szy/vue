@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    druid:
+      username: root
+      password: root
+      url: jdbc:mysql:///user
+      driver-class-name: com.mysql.jdbc.Driver
+      initial-size: 5
+  thymeleaf:
+    cache: false
+mybatis:
+  mapper-locations: classpath:/mapper/*Dao.xml
+  type-aliases-package: com.by.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com:
+      by:
+        mapper=debug:
+
